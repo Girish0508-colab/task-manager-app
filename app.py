@@ -1,13 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
+import os
 
 app = Flask(__name__)
 app.secret_key = "secret123"
 
 
 # DATABASE CONNECTION
+DB_PATH = os.path.join(os.getcwd(), "tasks.db")
+
 def get_db():
-    conn = sqlite3.connect("tasks.db")
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -18,18 +21,15 @@ def init_db():
     cursor = conn.cursor()
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS tasks(
+    CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT,
-        status TEXT,
-        due_date TEXT
+        title TEXT NOT NULL,
+        status TEXT DEFAULT 'todo'
     )
     """)
 
     conn.commit()
     conn.close()
-
-
 init_db()
 
 
@@ -159,4 +159,5 @@ def delete_task(id):
 
 
 if __name__ == "__main__":
+    init_db()
     app.run(debug=True)
