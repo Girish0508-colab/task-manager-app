@@ -4,6 +4,7 @@
 <head>
 <title>Ultimate AI Task Manager</title>
 
+
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -15,6 +16,7 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
 <style>
+    
 
 body{
 font-family:Arial;
@@ -144,12 +146,21 @@ backdrop-filter:blur(8px);
 </style>
 
 </head>
-
 <body>
 
 <canvas id="bg"></canvas>
 
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+
 <h1>🚀 Ultimate AI Task Manager</h1>
+
+<a href="/logout">
+<button style="background:#ef4444;color:white;padding:8px 14px;border-radius:6px;border:none;">
+Logout
+</button>
+</a>
+
+</div>
 
 <h2>Add Task</h2>
 
