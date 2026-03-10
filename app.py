@@ -1,14 +1,15 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, session, jsonify, url_for
 import sqlite3
 import os
 
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-
-# DATABASE CONNECTION
+# DATABASE PATH
 DB_PATH = os.path.join(os.getcwd(), "tasks.db")
 
+
+# CONNECT DATABASE
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -24,13 +25,13 @@ def init_db():
     CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
-        status TEXT DEFAULT 'todo'
+        status TEXT DEFAULT 'todo',
+        due_date TEXT
     )
     """)
 
     conn.commit()
     conn.close()
-init_db()
 
 
 # HOME PAGE
@@ -39,7 +40,7 @@ def index():
     return render_template("index.html")
 
 
-# LOGIN PAGE
+# LOGIN
 @app.route("/login", methods=["GET", "POST"])
 def login():
 
@@ -48,7 +49,7 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        # simple login (demo)
+        # simple demo login
         if username and password:
             session["user"] = username
             return redirect(url_for("dashboard"))
@@ -56,7 +57,7 @@ def login():
     return render_template("login.html")
 
 
-# REGISTER PAGE
+# REGISTER
 @app.route("/register", methods=["GET", "POST"])
 def register():
 
@@ -115,7 +116,7 @@ def add_task():
     cursor = conn.cursor()
 
     cursor.execute(
-        "INSERT INTO tasks (title,status,due_date) VALUES (?,?,?)",
+        "INSERT INTO tasks (title, status, due_date) VALUES (?, ?, ?)",
         (title, status, due_date)
     )
 
