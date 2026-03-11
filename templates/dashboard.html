@@ -1,22 +1,16 @@
 <!DOCTYPE html>
-
 <html>
 <head>
 <title>Ultimate AI Task Manager</title>
 
-
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet">
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
 <style>
-    
 
 body{
 font-family:Arial;
@@ -35,18 +29,11 @@ height:100%;
 z-index:-1;
 }
 
-h1{
-text-align:center;
-}
+h1{text-align:center;}
 
-.container{
-display:flex;
-gap:30px;
-}
+.container{display:flex;gap:30px;}
 
-.left{
-flex:3;
-}
+.left{flex:3;}
 
 .right{
 flex:1;
@@ -60,7 +47,6 @@ table{
 width:100%;
 border-collapse:collapse;
 background:rgba(255,255,255,0.08);
-border-radius:10px;
 }
 
 th,td{
@@ -76,15 +62,9 @@ border-radius:6px;
 cursor:pointer;
 }
 
-.doneBtn{
-background:#22c55e;
-color:white;
-}
+.doneBtn{background:#22c55e;color:white;}
 
-.deleteBtn{
-background:#ef4444;
-color:white;
-}
+.deleteBtn{background:#ef4444;color:white;}
 
 .card{
 background:rgba(255,255,255,0.15);
@@ -93,11 +73,7 @@ border-radius:8px;
 margin-bottom:8px;
 }
 
-.kanban{
-display:flex;
-gap:20px;
-margin-top:30px;
-}
+.kanban{display:flex;gap:20px;margin-top:30px;}
 
 .column{
 flex:1;
@@ -128,38 +104,43 @@ background:#22c55e;
 border-radius:10px;
 }
 
-.timer{
-font-size:22px;
-margin-top:10px;
+.timer{font-size:22px;margin-top:10px;}
+
+/* SUN ASSISTANT */
+
+#sunAssistant{
+position:fixed;
+bottom:40px;
+left:40px;
+width:150px;
+background:#facc15;
+color:black;
+padding:15px;
+border-radius:20px;
+text-align:center;
+box-shadow:0 0 20px rgba(255,200,0,0.6);
 }
 
-.assistant{
-position:fixed;
-bottom:20px;
-right:20px;
-background:rgba(255,255,255,0.12);
-padding:12px;
-border-radius:12px;
-backdrop-filter:blur(8px);
+#sunFace{font-size:32px;}
+
+.sunButtons button{
+margin-top:5px;
+font-size:12px;
 }
 
 </style>
-
 </head>
+
 <body>
 
 <canvas id="bg"></canvas>
 
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
-
 <h1>🚀 Ultimate AI Task Manager</h1>
 
+<div style="text-align:right;">
 <a href="/logout">
-<button style="background:#ef4444;color:white;padding:8px 14px;border-radius:6px;border:none;">
-Logout
-</button>
+<button style="background:#ef4444;color:white;">Logout</button>
 </a>
-
 </div>
 
 <h2>Add Task</h2>
@@ -198,7 +179,6 @@ Logout
 <tr>
 
 <td>{{task.title}}</td>
-
 <td>{{task.due_date}}</td>
 
 <td class="countdown" data-date="{{task.due_date}}"></td>
@@ -227,41 +207,30 @@ Logout
 
 </table>
 
+
 <h2>Kanban</h2>
 
 <div class="kanban">
 
 <div class="column">
-
 <h3>Todo</h3>
-
 {% for task in todo %}
-
 <div class="card">{{task.title}}</div>
 {% endfor %}
-
 </div>
 
 <div class="column">
-
 <h3>Progress</h3>
-
 {% for task in progress %}
-
 <div class="card">{{task.title}}</div>
 {% endfor %}
-
 </div>
 
 <div class="column">
-
 <h3>Done</h3>
-
 {% for task in done %}
-
 <div class="card">{{task.title}}</div>
 {% endfor %}
-
 </div>
 
 </div>
@@ -296,55 +265,62 @@ Logout
 
 </div>
 
-<div class="assistant">
 
-<p id="assistantMsg">AI Tip: Break big tasks into small wins.</p>
+<!-- SUN ASSISTANT -->
 
-<button onclick="aiSuggestion()">Motivate Me</button>
+<div id="sunAssistant">
+
+<div id="sunFace">😊</div>
+
+<div id="sunText">Hello! I'm Sunny</div>
+
+<div class="sunButtons">
+
+<button onclick="stopAlert()">Stop</button>
+<button onclick="snoozeAlert()">Snooze</button>
 
 </div>
 
+</div>
+
+
 <script>
 
-/* 3D BACKGROUND */
+/* SUN SPEAK */
 
-let scene=new THREE.Scene()
-let camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000)
+function sunSpeak(msg,face){
 
-let renderer=new THREE.WebGLRenderer({canvas:document.getElementById("bg")})
+document.getElementById("sunFace").innerText=face
+document.getElementById("sunText").innerText=msg
 
-renderer.setSize(window.innerWidth,window.innerHeight)
-
-let geometry=new THREE.BufferGeometry()
-
-let vertices=[]
-
-for(let i=0;i<3000;i++){
-vertices.push(
-THREE.MathUtils.randFloatSpread(2000),
-THREE.MathUtils.randFloatSpread(2000),
-THREE.MathUtils.randFloatSpread(2000)
-)
 }
 
-geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3))
+/* ALERT CONTROL */
 
-let material=new THREE.PointsMaterial({color:0xffffff})
+let alertActive=true
+let snoozeUntil=0
 
-let points=new THREE.Points(geometry,material)
 
-scene.add(points)
+function stopAlert(){
 
-camera.position.z=500
+alertActive=false
+sunSpeak("Alerts stopped","😌")
 
-function animate(){
-requestAnimationFrame(animate)
-points.rotation.x+=0.0005
-points.rotation.y+=0.0005
-renderer.render(scene,camera)
 }
 
-animate()
+function snoozeAlert(){
+
+alertActive=false
+sunSpeak("Snoozed for 10 minutes","😴")
+
+snoozeUntil=Date.now()+600000
+
+setTimeout(()=>{
+alertActive=true
+sunSpeak("Snooze finished!","☀️")
+},600000)
+
+}
 
 
 /* XP SYSTEM */
@@ -357,10 +333,14 @@ function addXP(){
 xp+=20
 
 if(xp>=100){
+
 xp=0
 level++
+
 document.getElementById("level").innerText=level
-speechSynthesis.speak(new SpeechSynthesisUtterance("Level up!"))
+
+sunSpeak("Level Up!","😎")
+
 }
 
 document.getElementById("xp").innerText=xp
@@ -375,15 +355,13 @@ function completeTask(id){
 
 addXP()
 
-confetti({particleCount:120,spread:70})
+confetti({particleCount:100,spread:70})
 
-speechSynthesis.speak(
-new SpeechSynthesisUtterance("Great job completing your task")
-)
+sunSpeak("Task completed!","😄")
 
 setTimeout(()=>{
 window.location.href="/update_status/"+id+"/done"
-},800)
+},700)
 
 }
 
@@ -399,6 +377,10 @@ let diff=new Date(el.dataset.date)-new Date()
 if(diff<=0){
 
 el.innerHTML="Expired"
+
+if(alertActive && Date.now()>snoozeUntil){
+sunSpeak("A task deadline passed!","😟")
+}
 
 }else{
 
@@ -431,9 +413,7 @@ initialView:"dayGridMonth",
 events:[
 
 {% for task in tasks %}
-
 {title:"{{task.title}}",start:"{{task.due_date}}"},
-
 {% endfor %}
 
 ]
@@ -452,24 +432,16 @@ calendar.render()
 let ctx=document.getElementById("chart")
 
 new Chart(ctx,{
-
 type:"doughnut",
-
 data:{
-
 labels:["Done","Pending"],
-
 datasets:[{
-
 data:[
 {{tasks|selectattr("status","equalto","done")|list|length}},
 {{tasks|rejectattr("status","equalto","done")|list|length}}
 ]
-
 }]
-
 }
-
 })
 
 
@@ -491,7 +463,7 @@ time--
 
 if(time<0){
 clearInterval(timer)
-speechSynthesis.speak(new SpeechSynthesisUtterance("Focus complete"))
+sunSpeak("Focus session finished!","😊")
 }
 
 },1000)
@@ -499,29 +471,50 @@ speechSynthesis.speak(new SpeechSynthesisUtterance("Focus complete"))
 }
 
 
-/* AI MOTIVATION */
+/* 3D BACKGROUND */
 
-function aiSuggestion(){
+let scene=new THREE.Scene()
+let camera=new THREE.PerspectiveCamera(75,window.innerWidth/window.innerHeight,0.1,1000)
 
-let tips=[
+let renderer=new THREE.WebGLRenderer({canvas:document.getElementById("bg")})
+renderer.setSize(window.innerWidth,window.innerHeight)
 
-"🚀 Start the hardest task first",
+let geometry=new THREE.BufferGeometry()
 
-"🔥 You are unstoppable today",
+let vertices=[]
 
-"⭐ Small progress beats perfection",
+for(let i=0;i<2000;i++){
 
-"🎯 Focus for 25 minutes"
-
-]
-
-let tip=tips[Math.floor(Math.random()*tips.length)]
-
-document.getElementById("assistantMsg").innerText=tip
-
-speechSynthesis.speak(new SpeechSynthesisUtterance(tip))
+vertices.push(
+THREE.MathUtils.randFloatSpread(2000),
+THREE.MathUtils.randFloatSpread(2000),
+THREE.MathUtils.randFloatSpread(2000)
+)
 
 }
+
+geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3))
+
+let material=new THREE.PointsMaterial({color:0xffffff})
+
+let points=new THREE.Points(geometry,material)
+
+scene.add(points)
+
+camera.position.z=500
+
+function animate(){
+
+requestAnimationFrame(animate)
+
+points.rotation.x+=0.0005
+points.rotation.y+=0.0005
+
+renderer.render(scene,camera)
+
+}
+
+animate()
 
 </script>
 
