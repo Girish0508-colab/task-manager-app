@@ -33,6 +33,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
             password TEXT
+            -- You can add points INTEGER DEFAULT 0, streak INTEGER DEFAULT 0 here later
         )
     """)
     conn.execute("""
@@ -48,21 +49,9 @@ def init_db():
     conn.commit()
     conn.close()
 
-# -------------------------
-# SAFE DB INIT
-# -------------------------
-try:
-    if not os.path.exists(DATABASE):
-        init_db()
-except Exception as e:
-    print("DB initialization failed:", e)
-
-# -------------------------
-# HEALTH CHECK
-# -------------------------
-@app.route("/ping")
-def ping():
-    return "pong"
+# Initialize DB if missing
+if not os.path.exists(DATABASE):
+    init_db()
 
 # -------------------------
 # ROUTES
@@ -76,6 +65,7 @@ def home():
     pending = conn.execute("SELECT COUNT(*) FROM tasks WHERE status='Pending' AND user_id=?", (session["user_id"],)).fetchone()[0]
     completed = conn.execute("SELECT COUNT(*) FROM tasks WHERE status='Done' AND user_id=?", (session["user_id"],)).fetchone()[0]
     conn.close()
+    # Safe: removed points/streak to prevent crash
     return render_template("dashboard.html", tasks=tasks, pending=pending, completed=completed)
 
 @app.route("/register", methods=["GET", "POST"])
@@ -163,9 +153,15 @@ def assistant():
     return jsonify({"reply": reply})
 
 # -------------------------
-# RUN SERVER (safe for Railway)
+# HEALTH CHECK (for Railway)
+# -------------------------
+@app.route("/ping")
+def ping():
+    return "pong"
+
+# -------------------------
+# RUN SERVER (local dev only)
 # -------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    debug_mode = not os.getenv("RAILWAY_ENV")
-    app.run(host="0.0.0.0", port=port, debug=debug_mode)
+    app.run(host="0.0.0.0", port=port, debug=True)
