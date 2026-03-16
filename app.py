@@ -1,16 +1,26 @@
 from flask import Flask, render_template, request, redirect, session, jsonify
 import sqlite3
+import os
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "super_secret_key"
+
+# -------------------------
+# DATABASE CONFIG
+# -------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Local = tasks.db
+# Render/Linux = /tmp/tasks.db
+DATABASE = "/tmp/tasks.db" if os.getenv("RENDER") else os.path.join(BASE_DIR, "tasks.db")
 
 
 # -------------------------
 # DATABASE CONNECTION
 # -------------------------
 def get_db():
-    conn = sqlite3.connect("database.db")
+    conn = sqlite3.connect(DATABASE)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -19,7 +29,6 @@ def get_db():
 # CREATE TABLES
 # -------------------------
 def init_db():
-
     conn = get_db()
 
     conn.execute("""
@@ -45,7 +54,9 @@ def init_db():
     conn.close()
 
 
-init_db()
+# create database if missing
+if not os.path.exists(DATABASE):
+    init_db()
 
 
 # -------------------------
@@ -103,11 +114,12 @@ def register():
                 (username, password)
             )
             conn.commit()
-        except:
+
+        except sqlite3.IntegrityError:
+            conn.close()
             return "Username already exists"
 
         conn.close()
-
         return redirect("/login")
 
     return render_template("register.html")
@@ -136,11 +148,9 @@ def login():
         if user and check_password_hash(user["password"], password):
 
             session["user_id"] = user["id"]
-
             return redirect("/")
 
-        else:
-            return "Invalid login"
+        return "Invalid username or password"
 
     return render_template("login.html")
 
@@ -150,9 +160,7 @@ def login():
 # -------------------------
 @app.route("/logout")
 def logout():
-
     session.clear()
-
     return redirect("/login")
 
 
@@ -162,10 +170,12 @@ def logout():
 @app.route("/add", methods=["POST"])
 def add():
 
+    if "user_id" not in session:
+        return redirect("/login")
+
     title = request.form["title"]
     deadline = request.form["deadline"]
 
-    # AI priority prediction
     text = title.lower()
 
     if "exam" in text or "deadline" in text or "urgent" in text:
@@ -237,16 +247,16 @@ def assistant():
     message = request.json["message"].lower()
 
     if "priority" in message:
-        reply = "High priority tasks should be completed first."
+        reply = "Focus on high priority tasks first."
 
     elif "productivity" in message:
-        reply = "Try the Pomodoro technique: 25 minutes work, 5 minutes break."
+        reply = "Try Pomodoro: 25 min work + 5 min break."
 
     elif "plan" in message:
-        reply = "Start with the most important tasks and schedule breaks."
+        reply = "Start with the most important tasks today."
 
     else:
-        reply = "Ask me about productivity, planning, or task priorities."
+        reply = "Ask about productivity, planning, or priorities."
 
     return jsonify({"reply": reply})
 
@@ -256,3 +266,10 @@ def assistant():
 # -------------------------
 if __name__ == "__main__":
     app.run(debug=True)
+    if __name__ == "__main__":
+        import os
+        if os.environ.get("PORT"):
+              port = int(os.environ.get("PORT"))
+              app.run(host="0.0.0.0", port=port)
+        else:
+             app.run(debug=True)
