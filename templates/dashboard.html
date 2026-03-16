@@ -1,0 +1,301 @@
+```html
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Smart Task Manager</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<style>
+
+body{
+font-family:Segoe UI;
+margin:0;
+background:linear-gradient(120deg,#667eea,#764ba2);
+color:white;
+transition:0.4s;
+}
+
+.dark{
+background:#1f1f1f;
+}
+
+.container{
+width:90%;
+max-width:1200px;
+margin:auto;
+padding:30px;
+}
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+
+button{
+border:none;
+padding:10px 15px;
+border-radius:8px;
+cursor:pointer;
+}
+
+.card{
+background:rgba(255,255,255,0.1);
+padding:20px;
+border-radius:15px;
+margin-bottom:20px;
+backdrop-filter:blur(10px);
+}
+
+.board{
+display:flex;
+gap:20px;
+}
+
+.column{
+flex:1;
+background:rgba(255,255,255,0.15);
+padding:15px;
+border-radius:10px;
+min-height:200px;
+}
+
+.task{
+background:white;
+color:black;
+padding:10px;
+border-radius:8px;
+margin-top:10px;
+cursor:grab;
+}
+
+.chartBox{
+width:500px;
+margin:auto;
+}
+
+.assistant{
+position:fixed;
+right:20px;
+bottom:20px;
+background:white;
+color:black;
+padding:15px;
+width:280px;
+border-radius:15px;
+box-shadow:0 0 10px black;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="topbar">
+
+<h1>🚀 Smart Task Manager</h1>
+
+<div>
+<button onclick="toggleTheme()">🌙 Dark Mode</button>
+<a href="/logout"><button>Logout</button></a>
+</div>
+
+</div>
+
+<div class="card">
+
+<h3>Add Task</h3>
+
+<form action="/add" method="POST">
+
+<input name="title" placeholder="Task name" required>
+<input type="date" name="deadline">
+
+<button>Add Task</button>
+<button type="button" onclick="voice()">🎤 Voice</button>
+
+</form>
+
+</div>
+
+<div class="card">
+
+<h3>Drag & Drop Task Board</h3>
+
+<div class="board">
+
+<div class="column" id="pending">
+
+<h4>Pending</h4>
+
+{% for task in tasks %}
+{% if task.status == "Pending" %}
+
+<div class="task">
+
+{{task.title}}
+
+<br>
+
+Priority: {{task.priority}}
+
+<br>
+
+<a href="/complete/{{task.id}}">Complete</a>
+
+</div>
+
+{% endif %}
+{% endfor %}
+
+</div>
+
+<div class="column" id="done">
+
+<h4>Completed</h4>
+
+{% for task in tasks %}
+{% if task.status == "Done" %}
+
+<div class="task">
+
+{{task.title}}
+
+<br>
+
+Priority: {{task.priority}}
+
+<br>
+
+<a href="/delete/{{task.id}}">Delete</a>
+
+</div>
+
+{% endif %}
+{% endfor %}
+
+</div>
+
+</div>
+
+</div>
+
+<div class="card chartBox">
+
+<h3 style="text-align:center">📊 Weekly Productivity</h3>
+
+<canvas id="chart"></canvas>
+
+</div>
+
+</div>
+
+<div class="assistant">
+
+<h3>🤖 Assistant</h3>
+
+<div id="chat"></div>
+
+<input id="msg" placeholder="Ask assistant">
+
+<button onclick="send()">Send</button>
+
+</div>
+
+<script>
+
+const pending = JSON.parse('{{ pending | tojson }}')
+const completed = JSON.parse('{{ completed | tojson }}')
+
+new Chart(document.getElementById("chart"),{
+
+type:"bar",
+
+data:{
+
+labels:["Pending","Completed"],
+
+datasets:[{
+
+label:"Tasks",
+
+data:[pending,completed]
+
+}]
+
+}
+
+})
+
+new Sortable(pending,{
+group:"tasks",
+animation:150
+})
+
+new Sortable(done,{
+group:"tasks",
+animation:150
+})
+
+function toggleTheme(){
+
+document.body.classList.toggle("dark")
+
+}
+
+function voice(){
+
+const speech=new webkitSpeechRecognition()
+
+speech.start()
+
+speech.onresult=function(event){
+
+document.querySelector("input[name='title']").value=
+event.results[0][0].transcript
+
+}
+
+}
+
+function send(){
+
+let msg=document.getElementById("msg").value
+
+fetch("/assistant",{
+
+method:"POST",
+
+headers:{"Content-Type":"application/json"},
+
+body:JSON.stringify({message:msg})
+
+})
+
+.then(r=>r.json())
+
+.then(data=>{
+
+document.getElementById("chat").innerHTML+=
+"<p><b>You:</b>"+msg+"</p>"
+
+document.getElementById("chat").innerHTML+=
+"<p><b>Bot:</b>"+data.reply+"</p>"
+
+})
+
+}
+
+</script>
+
+</body>
+</html>
+```
