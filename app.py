@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 # FLASK APP
 # -------------------------
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "super_secret_key")  # Use Railway env variable if set
+app.secret_key = os.getenv("SECRET_KEY", "super_secret_key")  # Railway env variable
 
 # -------------------------
 # DATABASE CONFIG
@@ -48,9 +48,21 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Initialize DB if missing
-if not os.path.exists(DATABASE):
-    init_db()
+# -------------------------
+# SAFE DB INIT
+# -------------------------
+try:
+    if not os.path.exists(DATABASE):
+        init_db()
+except Exception as e:
+    print("DB initialization failed:", e)
+
+# -------------------------
+# HEALTH CHECK
+# -------------------------
+@app.route("/ping")
+def ping():
+    return "pong"
 
 # -------------------------
 # ROUTES
@@ -151,8 +163,9 @@ def assistant():
     return jsonify({"reply": reply})
 
 # -------------------------
-# RUN SERVER
+# RUN SERVER (safe for Railway)
 # -------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    debug_mode = not os.getenv("RAILWAY_ENV")
+    app.run(host="0.0.0.0", port=port, debug=debug_mode)
